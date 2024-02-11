@@ -1,21 +1,26 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'</script>
+import Explorer from './components/Explorer.vue'
+import Settings from './components/Settings.vue'
+import {ref} from "vue";
+
+const bucket = ref("")
+const showExplorer = ref(false)
+
+function connected(b) {
+  bucket.value = b
+  showExplorer.value = true
+}
+
+function disconnect(b) {
+  bucket.value = ""
+  showExplorer.value = false
+}
+</script>
 
 <template>
-  <img id="logo" alt="Wails logo" src="./assets/images/logo-universal.png"/>
-  <HelloWorld/>
+  <Settings @connected="connected" v-if="!showExplorer"/>
+  <Explorer :bucket="bucket" v-if="showExplorer" @disconnect="disconnect"/>
 </template>
 
 <style>
-#logo {
-  display: block;
-  width: 50%;
-  height: 50%;
-  margin: auto;
-  padding: 10% 0 0;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
-  background-origin: content-box;
-}
 </style>
