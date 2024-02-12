@@ -24,6 +24,12 @@ type Config struct {
 	S3 S3Settings `json:"s3"`
 }
 
+var defaultConfig = Config{
+	S3: S3Settings{
+		Region: "us-east-1",
+	},
+}
+
 func getConfigFile() (string, error) {
 	filePath, err := xdg.ConfigFile("hitslab/s3browser/config.json")
 	if err != nil {
@@ -47,7 +53,7 @@ func getConfigFile() (string, error) {
 	_, err = os.Stat(filePath)
 
 	if os.IsNotExist(err) {
-		jsn, errM := json.Marshal(Config{})
+		jsn, errM := json.Marshal(defaultConfig)
 		if errM != nil {
 			return "", errM
 		}

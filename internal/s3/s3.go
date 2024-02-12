@@ -1,6 +1,8 @@
 package s3
 
 import (
+	"context"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -13,17 +15,12 @@ type S3 struct {
 	bucket string
 }
 
-type List struct {
-	Folders []string `json:"folders"`
-	Files   []string `json:"files"`
-}
-
 const (
-	batchSize = 1000
-	maxFiles  = 100000
+	maxKeys         = 1000
+	downloadThreads = 50
 )
 
-func (s *S3) Connect(st config.S3Settings) error {
+func (s *S3) Connect(ctx context.Context, st config.S3Settings) error {
 	ses, err := session.NewSession(&aws.Config{
 		Credentials:      credentials.NewStaticCredentials(st.AccessKey, st.SecretKey, ""),
 		Endpoint:         aws.String(st.BaseUrl),
@@ -38,7 +35,7 @@ func (s *S3) Connect(st config.S3Settings) error {
 
 	s.client = s3.New(ses)
 
-	_, err = s.client.ListObjectsV2(&s3.ListObjectsV2Input{
+	_, err = s.client.ListObjectsV2WithContext(ctx, &s3.ListObjectsV2Input{
 		Bucket:  aws.String(st.Bucket),
 		MaxKeys: aws.Int64(5),
 	})
@@ -50,46 +47,4 @@ func (s *S3) Connect(st config.S3Settings) error {
 	s.bucket = st.Bucket
 
 	return nil
-}
-
-func (s *S3) List(prefix string) (List, error) {
-	var l List
-	var listObjects *s3.ListObjectsV2Output
-	var err error
-
-	delimiter := "/"
-	after := ""
-
-	for {
-		i := s3.ListObjectsV2Input{
-			Bucket:    aws.String(s.bucket),
-			Prefix:    aws.String(prefix),
-			Delimiter: aws.String(delimiter),
-			MaxKeys:   aws.Int64(batchSize),
-		}
-
-		if after != "" {
-			i.StartAfter = aws.String(after)
-		}
-
-		listObjects, err = s.client.ListObjectsV2(&i)
-		if err != nil {
-			return List{}, err
-		}
-
-		for _, object := range listObjects.CommonPrefixes {
-			l.Folders = append(l.Folders, *object.Prefix)
-		}
-
-		for _, object := range listObjects.Contents {
-			l.Files = append(l.Files, *object.Key)
-			after = *object.Key
-		}
-
-		if len(l.Files) >= maxFiles || len(listObjects.Contents) < batchSize {
-			break
-		}
-	}
-
-	return l, nil
 }

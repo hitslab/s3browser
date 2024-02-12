@@ -6,6 +6,10 @@ export function Connect(arg1) {
   return window['go']['app']['App']['Connect'](arg1);
 }
 
+export function Download(arg1) {
+  return window['go']['app']['App']['Download'](arg1);
+}
+
 export function GetConfig() {
   return window['go']['app']['App']['GetConfig']();
 }

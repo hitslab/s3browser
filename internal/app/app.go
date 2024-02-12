@@ -3,8 +3,10 @@ package app
 import (
 	"context"
 
+	"github.com/adrg/xdg"
 	"github.com/hitslab/s3browser/internal/config"
 	"github.com/hitslab/s3browser/internal/s3"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 type S3Settings struct {
@@ -48,7 +50,7 @@ func (a *App) Connect(s config.S3Settings) error {
 		return err
 	}
 
-	err = a.s3.Connect(s)
+	err = a.s3.Connect(a.ctx, s)
 	if err != nil {
 		return err
 	}
@@ -57,5 +59,18 @@ func (a *App) Connect(s config.S3Settings) error {
 }
 
 func (a *App) List(prefix string) (s3.List, error) {
-	return a.s3.List(prefix)
+	return a.s3.List(a.ctx, prefix)
+}
+
+func (a *App) Download(prefix string) error {
+	dir, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
+		Title:            "Choose directory to download",
+		DefaultDirectory: xdg.UserDirs.Download,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return a.s3.Download(a.ctx, prefix, dir)
 }

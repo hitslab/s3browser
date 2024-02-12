@@ -1,30 +1,33 @@
 <script setup>
-import {computed} from "vue";
+import {computed, ref} from "vue";
 
-const props = defineProps({
-  type: String,
+const show = ref(false)
+
+const style = computed(() => {
+  return {
+    display: show.value === false ? 'none' : ''
+  };
 })
 
-const divClass = computed(() => {
-  if (props.type === "danger") {
-    return "alert danger"
-  }
+function open() {
+  show.value = true
+  setTimeout(() => {
+    close()
+  }, 10000);
+}
 
-  if (props.type === "warning") {
-    return "alert warning"
-  }
+function close() {
+  show.value = false
+}
 
-  if (props.type === "success") {
-    return "alert success"
-  }
-
-  return "alert"
+defineExpose({
+  open
 })
-
 </script>
 
 <template>
-  <div :class="divClass">
+  <div class="alert" :style="style">
+    <div class="close" @click="close"></div>
     <slot></slot>
   </div>
 </template>

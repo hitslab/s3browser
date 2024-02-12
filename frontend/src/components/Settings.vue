@@ -7,6 +7,7 @@ import Alert from "./Alert.vue";
 const emit = defineEmits(['connected'])
 
 const error = ref("")
+const alert = ref(null)
 
 const settings = reactive({
   base_url: "",
@@ -51,43 +52,46 @@ onMounted(() => {
 
 function showError(msg) {
   error.value = msg
-  setTimeout(() => {error.value = ""}, 5000);
+  alert.value.open();
 }
 </script>
 
 <template>
-  <Alert type="danger" v-if="error.length">{{ error }}</Alert>
+  <Alert ref="alert">
+    {{ error }}
+  </Alert>
 
-  <div class="settings-container">
-    <div class="headers">S3 connection settings</div>
-    <div class="fields">
-      <div class="input-group">
-        <label for="host" class="text-label">Base url</label>
-        <input v-model="settings.base_url" id="host" type="text" class="text-input"
-               placeholder="Example: http://localhost:9000">
+  <div class="settings">
+    <div class="settings-header">
+      S3 connection settings
+    </div>
+    <div class="settings-fields">
+      <div class="input-group field">
+        <label for="host">Base url</label>
+        <input id="host" type="text" placeholder="Example: http://localhost:9000" v-model="settings.base_url">
       </div>
-      <div class="input-group">
-        <label for="region" class="text-label">Region</label>
-        <input v-model="settings.region" id="region" type="text" class="text-input" placeholder="Example: us-east-1">
+      <div class="input-group field">
+        <label for="region">Region</label>
+        <input id="region" type="text" placeholder="Example: us-east-1" v-model="settings.region">
       </div>
-      <div class="input-group">
-        <label for="bucket" class="text-label">Bucket</label>
-        <input v-model="settings.bucket" id="bucket" type="text" class="text-input">
+      <div class="input-group field">
+        <label for="bucket">Bucket</label>
+        <input id="bucket" type="text" v-model="settings.bucket">
       </div>
-      <div class="input-group">
-        <label for="access-key" class="text-label">Access key</label>
-        <input v-model="settings.access_key" id="access-key" type="text" class="text-input">
+      <div class="input-group field">
+        <label for="access-key">Access key</label>
+        <input id="access-key" type="text" v-model="settings.access_key">
       </div>
-      <div class="input-group">
-        <label for="secret-key" class="text-label">Secret key</label>
-        <input v-model="settings.secret_key" id="secret-key" type="password" class="text-input">
+      <div class="input-group field">
+        <label for="secret-key">Secret key</label>
+        <input id="secret-key" type="password" v-model="settings.secret_key">
       </div>
       <div class="input-group checkbox">
-        <input v-model="settings.path_style" id="path-style" type="checkbox">
+        <input id="path-style" type="checkbox" v-model="settings.path_style">
         <label for="path-style">Use path style endpoint</label>
       </div>
       <div class="input-group checkbox">
-        <input v-model="settings.disable_ssl" id="disable-ssl" type="checkbox">
+        <input id="disable-ssl" type="checkbox" v-model="settings.disable_ssl">
         <label for="disable-ssl">Disable ssl</label>
       </div>
       <div class="input-group">
