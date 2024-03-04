@@ -1,6 +1,6 @@
 <script setup>
 import {computed, onMounted, ref} from 'vue'
-import {List} from '../../wailsjs/go/app/App'
+import {List, UploadFile, UploadFolder} from '../../wailsjs/go/app/App'
 import ContextMenu from "./ContextMenu.vue";
 import {Download} from "../../wailsjs/go/app/App.js";
 import Alert from "./Alert.vue";
@@ -15,6 +15,7 @@ const prefix = ref("")
 const folders = ref(null)
 const files = ref(null)
 const menu = ref(null)
+const contextItems = ref([])
 const contextItemText = ref("Download")
 const contextItemPrefix = ref(null)
 const error = ref("")
@@ -49,6 +50,23 @@ function list(p) {
   })
 }
 
+function uploadFile() {
+  UploadFile(prefix.value).then(result => {
+    list(prefix.value)
+  }).catch(error => {
+    showError(error)
+  })
+}
+
+function uploadFolder() {
+  UploadFolder(prefix.value).then(result => {
+    list(prefix.value)
+  }).catch(error => {
+    showError(error)
+  })
+}
+
+
 function back() {
   let target = ""
   const splited = prefix.value.split('/');
@@ -73,9 +91,9 @@ function toSettings() {
   emit('disconnect')
 }
 
-function download() {
+function download(target) {
   isDownloading.value = true
-  Download(contextItemPrefix.value).then(result => {
+  Download(target).then(result => {
     isDownloading.value = false
     console.log(result)
   }).catch(error => {
@@ -84,14 +102,47 @@ function download() {
   })
 }
 
-function openContextMenu(e, type, prefix) {
+function openDownloadContext(e, type, prefix) {
+  let itemText = "";
   if (type === "file") {
-    contextItemText.value = "Download file"
+    itemText = "Download file"
   } else if (type === "folder") {
-    contextItemText.value = "Download folder"
+    itemText = "Download folder"
   }
 
-  contextItemPrefix.value = prefix
+  contextItems.value = [
+    {
+      text: itemText,
+      iconClass: "context-item-icon download",
+      target: () => {
+        download(prefix)
+      },
+    }
+  ]
+
+  e.stopPropagation()
+  e.preventDefault()
+  menu.value.open(e);
+}
+
+function openUploadContext(e, type, prefix) {
+  contextItems.value = [
+    {
+      text: "Upload file",
+      iconClass: "context-item-icon",
+      target: () => {
+        uploadFile(prefix)
+      },
+    },
+    {
+      text: "Upload folder",
+      iconClass: "context-item-icon",
+      target: () => {
+        uploadFolder(prefix)
+      },
+    }
+  ]
+
   e.stopPropagation()
   e.preventDefault()
   menu.value.open(e);
@@ -117,9 +168,9 @@ onMounted(() => {
   </Alert>
 
   <ContextMenu ref="menu">
-    <div class="context-item" @click="download">
-      <div class="context-item-icon download"></div>
-      <div class="context-item-text">{{ contextItemText }}</div>
+    <div v-for="contextItem in contextItems" class="context-item" @click="contextItem.target">
+      <div :class="contextItem.iconClass"></div>
+      <div class="context-item-text">{{ contextItem.text }}</div>
     </div>
   </ContextMenu>
 
@@ -127,6 +178,7 @@ onMounted(() => {
     <div class="explorer-header">
       <div class="explorer-header-path">{{ currentPath }}</div>
       <div class="explorer-header-controls">
+        <div class="icon-button upload" @click="openUploadContext"></div>
         <div class="icon-button settings" @click="toSettings"></div>
       </div>
     </div>
@@ -136,15 +188,15 @@ onMounted(() => {
         <div class="files-item-name">..</div>
         <div class="icon-button more"></div>
       </div>
-      <div class="files-item folder" v-for="folder in folders" @click="list(folder)" @contextmenu="openContextMenu($event, 'folder', folder)">
+      <div class="files-item folder" v-for="folder in folders" @click="list(folder)" @contextmenu="openDownloadContext($event, 'folder', folder)">
         <div class="files-item-icon folder"></div>
         <div class="files-item-name">{{ withoutPrefix(folder) }}</div>
-        <div class="icon-button more" @click="openContextMenu($event, 'folder', folder)"></div>
+        <div class="icon-button more" @click="openDownloadContext($event, 'folder', folder)"></div>
       </div>
-      <div class="files-item file" v-for="file in files" @contextmenu="openContextMenu($event, 'file', file)">
+      <div class="files-item file" v-for="file in files" @contextmenu="openDownloadContext($event, 'file', file)">
         <div class="files-item-icon file"></div>
         <div class="files-item-name">{{ withoutPrefix(file) }}</div>
-        <div class="icon-button more" @click="openContextMenu($event, 'file', file)"></div>
+        <div class="icon-button more" @click="openDownloadContext($event, 'file', file)"></div>
       </div>
     </div>
   </div>

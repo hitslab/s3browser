@@ -10,3 +10,7 @@ export function Download(arg1:string):Promise<void>;
 export function GetConfig():Promise<config.Config>;
 
 export function List(arg1:string):Promise<s3.List>;
+
+export function UploadFile(arg1:string):Promise<void>;
+
+export function UploadFolder(arg1:string):Promise<void>;

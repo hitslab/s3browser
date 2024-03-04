@@ -43,6 +43,10 @@ body {
     cursor: pointer;
 }
 
+.icon-button.upload{
+    background: url("assets/icons/Add_ring.svg") 0 0 no-repeat;
+}
+
 .icon-button.settings{
     background: url("assets/icons/Setting_line.svg") 0 0 no-repeat;
 }
@@ -75,6 +79,11 @@ body {
 
 .explorer-header-controls {
     padding-left: 15px;
+    display: flex;
+}
+
+.explorer-header-controls .icon-button:not(:last-child) {
+    margin-right: 5px;
 }
 
 /** files list */

@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"os"
 
 	"github.com/adrg/xdg"
 	"github.com/hitslab/s3browser/internal/config"
@@ -63,14 +64,44 @@ func (a *App) List(prefix string) (s3.List, error) {
 }
 
 func (a *App) Download(prefix string) error {
-	dir, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
-		Title:            "Choose directory to download",
-		DefaultDirectory: xdg.UserDirs.Download,
-	})
+	dialogOption := runtime.OpenDialogOptions{
+		Title: "Choose directory to download",
+	}
 
+	if _, err := os.Stat(xdg.UserDirs.Download); !os.IsNotExist(err) {
+		dialogOption.DefaultDirectory = xdg.UserDirs.Download
+	}
+
+	dir, err := runtime.OpenDirectoryDialog(a.ctx, dialogOption)
 	if err != nil {
 		return err
 	}
 
 	return a.s3.Download(a.ctx, prefix, dir)
+}
+
+func (a *App) UploadFile(prefix string) error {
+	files, err := runtime.OpenMultipleFilesDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Choose upload files",
+	})
+	if err != nil {
+		return err
+	}
+
+	err = a.s3.UploadFiles(a.ctx, prefix, files)
+
+	return err
+}
+
+func (a *App) UploadFolder(prefix string) error {
+	dir, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Choose upload folder",
+	})
+	if err != nil {
+		return err
+	}
+
+	err = a.s3.UploadFolder(a.ctx, prefix, dir)
+
+	return err
 }

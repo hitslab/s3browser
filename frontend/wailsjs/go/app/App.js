@@ -17,3 +17,11 @@ export function GetConfig() {
 export function List(arg1) {
   return window['go']['app']['App']['List'](arg1);
 }
+
+export function UploadFile(arg1) {
+  return window['go']['app']['App']['UploadFile'](arg1);
+}
+
+export function UploadFolder(arg1) {
+  return window['go']['app']['App']['UploadFolder'](arg1);
+}
