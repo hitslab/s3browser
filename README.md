@@ -6,8 +6,8 @@ Simple desktop s3 browser.
 
 - Connecting to path-style and virtual-hosted style endpoints
 - List files
-- Download files
-- Download folders
+- Download files and folders
+- Upload files and folders
 
 ## Screenshots
 
@@ -15,5 +15,4 @@ Simple desktop s3 browser.
 ![files](https://github.com/hitslab/s3browser/assets/1733190/f9973d7d-17c4-4804-ba5d-cfe67c5161f2)
 
 ## Todo
-- Upload files and folders
 - Delete files and folders
