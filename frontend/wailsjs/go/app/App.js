@@ -6,8 +6,12 @@ export function Connect(arg1) {
   return window['go']['app']['App']['Connect'](arg1);
 }
 
-export function Download(arg1) {
-  return window['go']['app']['App']['Download'](arg1);
+export function DownloadFile(arg1) {
+  return window['go']['app']['App']['DownloadFile'](arg1);
+}
+
+export function DownloadFolder(arg1) {
+  return window['go']['app']['App']['DownloadFolder'](arg1);
 }
 
 export function GetConfig() {

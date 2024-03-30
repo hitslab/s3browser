@@ -5,7 +5,9 @@ import {s3} from '../models';
 
 export function Connect(arg1:config.S3Settings):Promise<void>;
 
-export function Download(arg1:string):Promise<void>;
+export function DownloadFile(arg1:string):Promise<void>;
+
+export function DownloadFolder(arg1:string):Promise<void>;
 
 export function GetConfig():Promise<config.Config>;
 

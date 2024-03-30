@@ -2,7 +2,7 @@
 import {computed, onMounted, ref} from 'vue'
 import {List, UploadFile, UploadFolder} from '../../wailsjs/go/app/App'
 import ContextMenu from "./ContextMenu.vue";
-import {Download} from "../../wailsjs/go/app/App.js";
+import {DownloadFile, DownloadFolder} from "../../wailsjs/go/app/App.js";
 import Alert from "./Alert.vue";
 
 const props = defineProps({
@@ -16,8 +16,6 @@ const folders = ref(null)
 const files = ref(null)
 const menu = ref(null)
 const contextItems = ref([])
-const contextItemText = ref("Download")
-const contextItemPrefix = ref(null)
 const error = ref("")
 const alert = ref(null)
 const isDownloading = ref(false)
@@ -66,7 +64,6 @@ function uploadFolder() {
   })
 }
 
-
 function back() {
   let target = ""
   const splited = prefix.value.split('/');
@@ -91,9 +88,9 @@ function toSettings() {
   emit('disconnect')
 }
 
-function download(target) {
+function downloadFolder(target) {
   isDownloading.value = true
-  Download(target).then(result => {
+  DownloadFolder(target).then(result => {
     isDownloading.value = false
     console.log(result)
   }).catch(error => {
@@ -102,23 +99,31 @@ function download(target) {
   })
 }
 
-function openDownloadContext(e, type, prefix) {
-  let itemText = "";
-  if (type === "file") {
-    itemText = "Download file"
-  } else if (type === "folder") {
-    itemText = "Download folder"
-  }
+function downloadFile(target) {
+  DownloadFile(target).then(result => {
+  }).catch(error => {
+    showError(error)
+  })
+}
 
-  contextItems.value = [
-    {
-      text: itemText,
+function openDownloadContext(e, type, prefix) {
+  if (type === "file") {
+    contextItems.value = [{
+      text: "Download file",
       iconClass: "context-item-icon download",
       target: () => {
-        download(prefix)
+        downloadFile(prefix)
       },
-    }
-  ]
+    }]
+  } else if (type === "folder") {
+    contextItems.value = [{
+      text: "Download folder",
+      iconClass: "context-item-icon download",
+      target: () => {
+        downloadFolder(prefix)
+      },
+    }]
+  }
 
   e.stopPropagation()
   e.preventDefault()
@@ -188,7 +193,8 @@ onMounted(() => {
         <div class="files-item-name">..</div>
         <div class="icon-button more"></div>
       </div>
-      <div class="files-item folder" v-for="folder in folders" @click="list(folder)" @contextmenu="openDownloadContext($event, 'folder', folder)">
+      <div class="files-item folder" v-for="folder in folders" @click="list(folder)"
+           @contextmenu="openDownloadContext($event, 'folder', folder)">
         <div class="files-item-icon folder"></div>
         <div class="files-item-name">{{ withoutPrefix(folder) }}</div>
         <div class="icon-button more" @click="openDownloadContext($event, 'folder', folder)"></div>

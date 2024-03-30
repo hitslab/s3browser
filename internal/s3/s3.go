@@ -15,11 +15,6 @@ type S3 struct {
 	bucket string
 }
 
-const (
-	maxKeys         = 1000
-	downloadThreads = 50
-)
-
 func (s *S3) Connect(ctx context.Context, st config.S3Settings) error {
 	ses, err := session.NewSession(&aws.Config{
 		Credentials:      credentials.NewStaticCredentials(st.AccessKey, st.SecretKey, ""),

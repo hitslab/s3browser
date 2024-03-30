@@ -2,14 +2,18 @@ package s3
 
 import (
 	"context"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+)
+
+const (
+	downloadThreads = 50
 )
 
 type downloadJob struct {
@@ -17,27 +21,22 @@ type downloadJob struct {
 	path string
 }
 
-func (s *S3) Download(ctx context.Context, prefix, downloadDir string) error {
-	prefix = strings.TrimLeft(prefix, "/")
-	downloadDir = strings.TrimRight(downloadDir, "/")
-
-	pParts := strings.Split(prefix, "/")
-	isDir := pParts[len(pParts)-1] == ""
-	if !isDir {
-		return s.downloadKey(ctx, prefix, downloadDir+"/"+pParts[len(pParts)-1])
+func (s *S3) DownloadFile(ctx context.Context, key, dir string) error {
+	if keyIsDir(key) {
+		return errors.New("cant download folder")
 	}
 
-	dirName := ""
-	if len(pParts) > 1 {
-		dirName = pParts[len(pParts)-2]
+	path := getDownloadPath(key, dir, "")
+
+	return s.downloadKey(ctx, key, path)
+}
+
+func (s *S3) DownloadFolder(ctx context.Context, prefix, dir string) error {
+	if !keyIsDir(prefix) {
+		return errors.New("cant download file")
 	}
 
-	baseDownloadPath := downloadDir + "/"
-	if dirName != "" {
-		baseDownloadPath += dirName + "/"
-	}
-
-	l, err := s.List(ctx, prefix)
+	keys, err := s.listForDownload(ctx, prefix)
 	if err != nil {
 		return err
 	}
@@ -50,23 +49,51 @@ func (s *S3) Download(ctx context.Context, prefix, downloadDir string) error {
 
 	scheduledKeys := 0
 
-	for _, key := range l.Files {
-		keyParts := strings.Split(key, "/")
-		if keyParts[len(keyParts)-1] == "" {
-			continue
-		}
-
+	for _, key := range keys {
 		scheduledKeys++
-		percent := 100 * scheduledKeys / len(l.Files)
+		percent := 100 * scheduledKeys / len(keys)
 		runtime.EventsEmit(ctx, "download-process", percent)
 
 		downloadJobs <- downloadJob{
 			key:  key,
-			path: baseDownloadPath + strings.Replace(key, prefix, "", 1),
+			path: getDownloadPath(key, dir, prefix),
 		}
 	}
 
 	return nil
+}
+
+func (s *S3) listForDownload(ctx context.Context, prefix string) ([]string, error) {
+	var keys []string
+	var after string
+
+	for {
+		i := s3.ListObjectsV2Input{
+			Bucket:  aws.String(s.bucket),
+			Prefix:  aws.String(prefix),
+			MaxKeys: aws.Int64(maxKeys),
+		}
+
+		if after != "" {
+			i.StartAfter = aws.String(after)
+		}
+
+		res, err := s.client.ListObjectsV2WithContext(ctx, &i)
+		if err != nil {
+			return keys, err
+		}
+
+		for _, object := range res.Contents {
+			keys = append(keys, *object.Key)
+			after = *object.Key
+		}
+
+		if len(res.Contents) < maxKeys {
+			break
+		}
+	}
+
+	return keys, nil
 }
 
 func (s *S3) downloadWorker(ctx context.Context, jobs <-chan downloadJob) {

@@ -7,6 +7,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
+const (
+	maxKeys = 1000
+)
+
 type List struct {
 	Folders []string `json:"folders"`
 	Files   []string `json:"files"`

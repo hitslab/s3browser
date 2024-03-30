@@ -63,7 +63,7 @@ func (a *App) List(prefix string) (s3.List, error) {
 	return a.s3.List(a.ctx, prefix)
 }
 
-func (a *App) Download(prefix string) error {
+func (a *App) DownloadFolder(prefix string) error {
 	dialogOption := runtime.OpenDialogOptions{
 		Title: "Choose directory to download",
 	}
@@ -77,7 +77,24 @@ func (a *App) Download(prefix string) error {
 		return err
 	}
 
-	return a.s3.Download(a.ctx, prefix, dir)
+	return a.s3.DownloadFolder(a.ctx, prefix, dir)
+}
+
+func (a *App) DownloadFile(key string) error {
+	dialogOption := runtime.OpenDialogOptions{
+		Title: "Choose directory to download",
+	}
+
+	if _, err := os.Stat(xdg.UserDirs.Download); !os.IsNotExist(err) {
+		dialogOption.DefaultDirectory = xdg.UserDirs.Download
+	}
+
+	dir, err := runtime.OpenDirectoryDialog(a.ctx, dialogOption)
+	if err != nil {
+		return err
+	}
+
+	return a.s3.DownloadFile(a.ctx, key, dir)
 }
 
 func (a *App) UploadFile(prefix string) error {
